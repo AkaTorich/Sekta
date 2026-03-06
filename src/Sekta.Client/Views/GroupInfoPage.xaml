@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Sekta.Client.ViewModels"
+             xmlns:dto="clr-namespace:Sekta.Shared.DTOs;assembly=Sekta.Shared"
+             x:Class="Sekta.Client.Views.GroupInfoPage"
+             x:DataType="vm:GroupInfoViewModel"
+             Title="Group Info"
+             BackgroundColor="{AppThemeBinding Light=White, Dark=#17212B}"
+             Shell.NavBarIsVisible="True">
+
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior IsVisible="False" IsEnabled="False" />
+    </Shell.BackButtonBehavior>
+
+    <Grid RowDefinitions="Auto,Auto,Auto,*">
+
+        <!-- Header with back button and group name -->
+        <Grid Grid.Row="0" Padding="8,8,16,8" ColumnDefinitions="Auto,Auto,*"
+              ColumnSpacing="12"
+              BackgroundColor="{AppThemeBinding Light=#F7F7F8, Dark=#17212B}">
+            <Button Grid.Column="0" Text="←" FontSize="22"
+                    BackgroundColor="Transparent"
+                    TextColor="{StaticResource PrimaryColor}"
+                    Command="{Binding GoBackCommand}"
+                    Padding="8,0" />
+
+            <!-- Group avatar -->
+            <Border Grid.Column="1" StrokeShape="RoundRectangle 24"
+                    Stroke="Transparent"
+                    BackgroundColor="#5B9BD5"
+                    WidthRequest="48" HeightRequest="48"
+                    Padding="0" VerticalOptions="Center">
+                <Grid>
+                    <Label Text="{Binding ChatTitle, Converter={StaticResource FirstChar}}"
+                           FontSize="20" FontAttributes="Bold"
+                           TextColor="White"
+                           HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Image Source="{Binding GroupAvatarUrl, Converter={StaticResource MediaUrl}}"
+                           Aspect="AspectFill" />
+                </Grid>
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ChangeAvatarCommand}" />
+                </Border.GestureRecognizers>
+            </Border>
+
+            <VerticalStackLayout Grid.Column="2" VerticalOptions="Center" Spacing="2">
+                <Label Text="{Binding ChatTitle}"
+                       FontSize="20" FontAttributes="Bold"
+                       TextColor="{AppThemeBinding Light={StaticResource TextPrimaryColor}, Dark=#FFFFFF}" />
+                <Label Text="{Binding Members.Count, StringFormat='{0} members'}"
+                       FontSize="13"
+                       TextColor="{AppThemeBinding Light={StaticResource TextSecondaryColor}, Dark=#8B9DAF}" />
+                <Label Text="Tap avatar to change"
+                       FontSize="11" IsVisible="{Binding IsOwner}"
+                       TextColor="{StaticResource PrimaryColor}" />
+            </VerticalStackLayout>
+        </Grid>
+
+        <!-- Add Member Button -->
+        <Grid Grid.Row="1" Padding="14,10" ColumnDefinitions="44,*" ColumnSpacing="12"
+              BackgroundColor="{AppThemeBinding Light=White, Dark=#17212B}">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding ShowAddMembersCommand}" />
+            </Grid.GestureRecognizers>
+            <Border Grid.Column="0" StrokeShape="RoundRectangle 22"
+                    Stroke="Transparent"
+                    BackgroundColor="{StaticResource PrimaryColor}"
+                    WidthRequest="44" HeightRequest="44"
+                    Padding="0" VerticalOptions="Center">
+                <Label Text="+" FontSize="24" FontAttributes="Bold"
+                       TextColor="White"
+                       HorizontalOptions="Center" VerticalOptions="Center" />
+            </Border>
+            <Label Grid.Column="1" Text="Add Member"
+                   FontSize="16" FontAttributes="Bold"
+                   TextColor="{StaticResource PrimaryColor}"
+                   VerticalOptions="Center" />
+        </Grid>
+
+        <!-- Add Members Panel (contacts to add) -->
+        <CollectionView Grid.Row="2" ItemsSource="{Binding Contacts}"
+                        IsVisible="{Binding IsAddingMembers}"
+                        MaximumHeightRequest="250"
+                        SelectionMode="None"
+                        BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#1F2936}">
+            <CollectionView.Header>
+                <Grid Padding="16,8,8,4" ColumnDefinitions="*,Auto">
+                    <Label Grid.Column="0" Text="SELECT CONTACT TO ADD"
+                           FontSize="12" FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light={StaticResource TextSecondaryColor}, Dark=#8B9DAF}"
+                           CharacterSpacing="1" VerticalOptions="Center" />
+                    <Button Grid.Column="1" Text="✕"
+                            Command="{Binding HideAddMembersCommand}"
+                            BackgroundColor="Transparent"
+                            TextColor="{AppThemeBinding Light={StaticResource TextSecondaryColor}, Dark=#8B9DAF}"
+                            FontSize="16" WidthRequest="36" HeightRequest="36" Padding="0" />
+                </Grid>
+            </CollectionView.Header>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="dto:UserDto">
+                    <Grid Padding="14,8" ColumnDefinitions="38,*,Auto" ColumnSpacing="10"
+                          BackgroundColor="{AppThemeBinding Light=White, Dark=#17212B}">
+                        <!-- Avatar -->
+                        <Border Grid.Column="0" StrokeShape="RoundRectangle 19"
+                                Stroke="Transparent"
+                                BackgroundColor="{StaticResource PrimaryColor}"
+                                WidthRequest="38" HeightRequest="38"
+                                Padding="0" VerticalOptions="Center">
+                            <Grid>
+                                <Label Text="{Binding DisplayName, Converter={StaticResource FirstChar}}"
+                                       FontSize="16" FontAttributes="Bold"
+                                       TextColor="White"
+                                       HorizontalOptions="Center" VerticalOptions="Center" />
+                                <Image Source="{Binding AvatarUrl, Converter={StaticResource MediaUrl}}"
+                                       Aspect="AspectFill" />
+                            </Grid>
+                        </Border>
+
+                        <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="1">
+                            <Label Text="{Binding DisplayName}" FontSize="14" FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light=#000000, Dark=#FFFFFF}" />
+                            <Label Text="{Binding Username, StringFormat='@{0}'}"
+                                   FontSize="11" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryColor}, Dark=#8B9DAF}" />
+                        </VerticalStackLayout>
+
+                        <Button Grid.Column="2" Text="Add"
+                                CommandParameter="{Binding .}"
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:GroupInfoViewModel}}, Path=AddMemberCommand}"
+                                BackgroundColor="{StaticResource PrimaryColor}"
+                                TextColor="White" CornerRadius="16"
+                                HeightRequest="32" FontSize="12" Padding="14,0" />
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.EmptyView>
+                <Label Text="No more contacts to add"
+                       FontSize="14" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryColor}, Dark=#8B9DAF}"
+                       HorizontalOptions="Center" Padding="16,20" />
+            </CollectionView.EmptyView>
+        </CollectionView>
+
+        <!-- Members List -->
+        <CollectionView Grid.Row="3" ItemsSource="{Binding Members}"
+                        SelectionMode="None">
+            <CollectionView.Header>
+                <Label Text="MEMBERS"
+                       FontSize="12" FontAttributes="Bold"
+                       TextColor="{AppThemeBinding Light={StaticResource TextSecondaryColor}, Dark=#8B9DAF}"
+                       Padding="16,14,16,6"
+                       CharacterSpacing="1" />
+            </CollectionView.Header>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="dto:ChatMemberDto">
+                    <Grid Padding="14,10" ColumnDefinitions="48,*,Auto,Auto" ColumnSpacing="12"
+                          BackgroundColor="{AppThemeBinding Light=White, Dark=#17212B}">
+                        <!-- Avatar -->
+                        <Border Grid.Column="0" StrokeShape="RoundRectangle 24"
+                                Stroke="Transparent"
+                                BackgroundColor="{StaticResource PrimaryColor}"
+                                WidthRequest="48" HeightRequest="48"
+                                Padding="0" VerticalOptions="Center">
+                            <Grid>
+                                <Label Text="{Binding DisplayName, Converter={StaticResource FirstChar}}"
+                                       FontSize="20" FontAttributes="Bold"
+                                       TextColor="White"
+                                       HorizontalOptions="Center" VerticalOptions="Center" />
+                                <Image Source="{Binding AvatarUrl, Converter={StaticResource MediaUrl}}"
+                                       Aspect="AspectFill" />
+                            </Grid>
+                        </Border>
+
+                        <!-- Name + role -->
+                        <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                            <Label Text="{Binding DisplayName}"
+                                   FontSize="16" FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light=#000000, Dark=#FFFFFF}" />
+                            <Label Text="{Binding Username, StringFormat='@{0}'}"
+                                   FontSize="13"
+                                   TextColor="{AppThemeBinding Light={StaticResource TextSecondaryColor}, Dark=#8B9DAF}" />
+                        </VerticalStackLayout>
+
+                        <!-- Role badge -->
+                        <Border Grid.Column="2"
+                                StrokeShape="RoundRectangle 10"
+                                Stroke="Transparent"
+                                BackgroundColor="{AppThemeBinding Light=#E8F4FD, Dark=#1F2936}"
+                                Padding="8,3"
+                                VerticalOptions="Center"
+                                IsVisible="{Binding Role, Converter={StaticResource NullToBool}}">
+                            <Label Text="{Binding Role}"
+                                   FontSize="11"
+                                   TextColor="{StaticResource PrimaryColor}" />
+                        </Border>
+
+                        <!-- Remove button (only visible to Owner) -->
+                        <Button Grid.Column="3" Text="✕"
+                                CommandParameter="{Binding .}"
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:GroupInfoViewModel}}, Path=RemoveMemberCommand}"
+                                IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:GroupInfoViewModel}}, Path=IsOwner}"
+                                BackgroundColor="Transparent"
+                                TextColor="#FF3B30"
+                                FontSize="18" WidthRequest="38" HeightRequest="38"
+                                Padding="0" VerticalOptions="Center" />
+
+                        <!-- Separator -->
+                        <BoxView Grid.Column="1" Grid.ColumnSpan="3"
+                                 HeightRequest="0.5"
+                                 Color="{AppThemeBinding Light=#E8E8E8, Dark=#2B3845}"
+                                 VerticalOptions="End" />
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+
+</ContentPage>

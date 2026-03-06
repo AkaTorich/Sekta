@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Sekta.Client.ViewModels"
+             x:Class="Sekta.Client.Views.RegisterPage"
+             x:DataType="vm:RegisterViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryColor}, Dark=#17212B}">
+
+    <ScrollView VerticalOptions="Center">
+        <Grid VerticalOptions="Center" Padding="30">
+            <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#1F2936}"
+                    StrokeShape="RoundRectangle 20"
+                    Stroke="{AppThemeBinding Light=Transparent, Dark=#2B3845}"
+                    Padding="30"
+                    MaximumWidthRequest="400"
+                    Shadow="{OnPlatform Default={Shadow Brush=#40000000, Offset='0,4', Radius=16, Opacity=0.2}}">
+                <VerticalStackLayout Spacing="14">
+
+                    <!-- Logo area -->
+                    <Border StrokeShape="RoundRectangle 35"
+                            Stroke="Transparent"
+                            BackgroundColor="{AppThemeBinding Light=#E8F4FD, Dark=#242F3D}"
+                            WidthRequest="70" HeightRequest="70"
+                            HorizontalOptions="Center"
+                            Margin="0,0,0,2">
+                        <Label Text="S" FontSize="34" FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryColor}"
+                               HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+
+                    <Label Text="Create Account"
+                           FontSize="26" FontAttributes="Bold"
+                           TextColor="{StaticResource PrimaryColor}"
+                           HorizontalOptions="Center"
+                           Margin="0,0,0,6" />
+
+                    <!-- Username -->
+                    <Border StrokeShape="RoundRectangle 12"
+                            Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#2B3845}"
+                            BackgroundColor="{AppThemeBinding Light=#F7F7F8, Dark=#242F3D}"
+                            Padding="14,0" HeightRequest="48">
+                        <Entry Placeholder="Username"
+                               Text="{Binding Username}"
+                               ReturnType="Next" FontSize="15"
+                               BackgroundColor="Transparent"
+                               TextColor="{AppThemeBinding Light=#000000, Dark=#FFFFFF}"
+                               PlaceholderColor="{AppThemeBinding Light=#999999, Dark=#8B9DAF}" />
+                    </Border>
+
+                    <!-- Display Name -->
+                    <Border StrokeShape="RoundRectangle 12"
+                            Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#2B3845}"
+                            BackgroundColor="{AppThemeBinding Light=#F7F7F8, Dark=#242F3D}"
+                            Padding="14,0" HeightRequest="48">
+                        <Entry Placeholder="Display Name (optional)"
+                               Text="{Binding DisplayName}"
+                               ReturnType="Next" FontSize="15"
+                               BackgroundColor="Transparent"
+                               TextColor="{AppThemeBinding Light=#000000, Dark=#FFFFFF}"
+                               PlaceholderColor="{AppThemeBinding Light=#999999, Dark=#8B9DAF}" />
+                    </Border>
+
+                    <!-- Email -->
+                    <Border StrokeShape="RoundRectangle 12"
+                            Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#2B3845}"
+                            BackgroundColor="{AppThemeBinding Light=#F7F7F8, Dark=#242F3D}"
+                            Padding="14,0" HeightRequest="48">
+                        <Entry Placeholder="Email"
+                               Text="{Binding Email}"
+                               Keyboard="Email"
+                               ReturnType="Next" FontSize="15"
+                               BackgroundColor="Transparent"
+                               TextColor="{AppThemeBinding Light=#000000, Dark=#FFFFFF}"
+                               PlaceholderColor="{AppThemeBinding Light=#999999, Dark=#8B9DAF}" />
+                    </Border>
+
+                    <!-- Password -->
+                    <Border StrokeShape="RoundRectangle 12"
+                            Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#2B3845}"
+                            BackgroundColor="{AppThemeBinding Light=#F7F7F8, Dark=#242F3D}"
+                            Padding="14,0" HeightRequest="48">
+                        <Entry Placeholder="Password"
+                               Text="{Binding Password}"
+                               IsPassword="True"
+                               ReturnType="Done"
+                               ReturnCommand="{Binding RegisterCommand}"
+                               FontSize="15"
+                               BackgroundColor="Transparent"
+                               TextColor="{AppThemeBinding Light=#000000, Dark=#FFFFFF}"
+                               PlaceholderColor="{AppThemeBinding Light=#999999, Dark=#8B9DAF}" />
+                    </Border>
+
+                    <Label Text="{Binding ErrorMessage}"
+                           TextColor="#FF3B30" FontSize="12"
+                           IsVisible="{Binding ErrorMessage, Converter={StaticResource NullToBool}}"
+                           HorizontalOptions="Center" />
+
+                    <Button Text="Sign Up"
+                            Command="{Binding RegisterCommand}"
+                            BackgroundColor="{StaticResource PrimaryColor}"
+                            TextColor="White" CornerRadius="24"
+                            HeightRequest="50" FontSize="16" FontAttributes="Bold"
+                            IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBool}}" />
+
+                    <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                       IsVisible="{Binding IsLoading}"
+                                       Color="{StaticResource PrimaryColor}" />
+
+                    <HorizontalStackLayout HorizontalOptions="Center" Spacing="5" Margin="0,4,0,0">
+                        <Label Text="Already have an account?"
+                               FontSize="14"
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondaryColor}, Dark=#8B9DAF}" />
+                        <Label Text="Log In"
+                               FontSize="14" FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryColor}">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding GoToLoginCommand}" />
+                            </Label.GestureRecognizers>
+                        </Label>
+                    </HorizontalStackLayout>
+
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+    </ScrollView>
+
+</ContentPage>

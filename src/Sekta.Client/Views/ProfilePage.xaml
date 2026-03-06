@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Sekta.Client.ViewModels"
+             x:Class="Sekta.Client.Views.ProfilePage"
+             x:DataType="vm:ProfileViewModel"
+             Title="Profile"
+             BackgroundColor="{AppThemeBinding Light=#F0F2F5, Dark=#0E1621}">
+
+    <Grid RowDefinitions="Auto,*">
+        <!-- Close button -->
+        <Border Grid.Row="0" StrokeShape="RoundRectangle 16"
+                Stroke="Transparent" BackgroundColor="#30FFFFFF"
+                WidthRequest="36" HeightRequest="36"
+                HorizontalOptions="End" Margin="0,10,14,0"
+                ZIndex="10">
+            <Label Text="&#x2715;" FontSize="18"
+                   HorizontalOptions="Center" VerticalOptions="Center"
+                   TextColor="{AppThemeBinding Light=#666666, Dark=#AAAAAA}" />
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding CloseCommand}" />
+            </Border.GestureRecognizers>
+        </Border>
+
+    <ScrollView Grid.Row="1">
+        <VerticalStackLayout Spacing="0">
+
+            <!-- Header with avatar -->
+            <Grid BackgroundColor="{StaticResource PrimaryColor}"
+                  HeightRequest="180" Padding="20">
+                <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="10">
+                    <Grid HorizontalOptions="Center">
+                        <Border StrokeShape="RoundRectangle 60"
+                                Stroke="White" StrokeThickness="3"
+                                WidthRequest="120" HeightRequest="120"
+                                BackgroundColor="{StaticResource PrimaryDarkColor}"
+                                Padding="0">
+                            <Grid>
+                                <!-- Fallback: initial letter (always behind image) -->
+                                <Label Text="{Binding Username, Converter={StaticResource FirstChar}}"
+                                       FontSize="44" FontAttributes="Bold" TextColor="White"
+                                       HorizontalOptions="Center" VerticalOptions="Center" />
+                                <!-- Actual avatar image (overlays initial when loaded) -->
+                                <Image Source="{Binding AvatarUrl, Converter={StaticResource MediaUrl}}"
+                                       Aspect="AspectFill" />
+                            </Grid>
+                        </Border>
+                        <Border StrokeShape="RoundRectangle 15"
+                                Stroke="Transparent"
+                                BackgroundColor="White"
+                                WidthRequest="36" HeightRequest="36"
+                                HorizontalOptions="End" VerticalOptions="End"
+                                Padding="0">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ChangeAvatarCommand}" />
+                            </Border.GestureRecognizers>
+                            <Label Text="&#9998;" FontSize="18"
+                                   TextColor="{StaticResource PrimaryColor}"
+                                   HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+            </Grid>
+
+            <!-- Account info card -->
+            <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#17212B}"
+                    StrokeShape="RoundRectangle 14"
+                    Stroke="{AppThemeBinding Light=#E8E8E8, Dark=#2B3845}"
+                    Margin="14,14,14,0" Padding="16,14">
+                <VerticalStackLayout Spacing="14">
+                    <Label Text="Account" FontSize="14" FontAttributes="Bold"
+                           TextColor="{StaticResource PrimaryColor}" />
+
+                    <!-- Username -->
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Username" FontSize="12"
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondaryColor}, Dark=#8B9DAF}" />
+                        <Label Text="{Binding Username, StringFormat='@{0}'}" FontSize="16" FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light=#000000, Dark=#FFFFFF}" />
+                    </VerticalStackLayout>
+
+                    <BoxView HeightRequest="0.5" Color="{AppThemeBinding Light=#E8E8E8, Dark=#2B3845}" />
+
+                    <!-- Email -->
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Email" FontSize="12"
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondaryColor}, Dark=#8B9DAF}" />
+                        <Label Text="{Binding Email}" FontSize="15"
+                               TextColor="{AppThemeBinding Light=#000000, Dark=#FFFFFF}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Editable info card -->
+            <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#17212B}"
+                    StrokeShape="RoundRectangle 14"
+                    Stroke="{AppThemeBinding Light=#E8E8E8, Dark=#2B3845}"
+                    Margin="14,10,14,0" Padding="16,14">
+                <VerticalStackLayout Spacing="14">
+                    <Label Text="Personal Info" FontSize="14" FontAttributes="Bold"
+                           TextColor="{StaticResource PrimaryColor}" />
+
+                    <!-- Display Name -->
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Display Name" FontSize="12"
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondaryColor}, Dark=#8B9DAF}" />
+                        <Border StrokeShape="RoundRectangle 10"
+                                Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#2B3845}"
+                                BackgroundColor="{AppThemeBinding Light=#F7F7F8, Dark=#1F2936}"
+                                Padding="12,0" HeightRequest="44">
+                            <Entry Text="{Binding DisplayName}" Placeholder="Your display name"
+                                   FontSize="15" BackgroundColor="Transparent"
+                                   TextColor="{AppThemeBinding Light=#000000, Dark=#FFFFFF}"
+                                   PlaceholderColor="{AppThemeBinding Light=#999999, Dark=#8B9DAF}" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- Bio -->
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Bio" FontSize="12"
+                               TextColor="{AppThemeBinding Light={StaticResource TextSecondaryColor}, Dark=#8B9DAF}" />
+                        <Border StrokeShape="RoundRectangle 10"
+                                Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#2B3845}"
+                                BackgroundColor="{AppThemeBinding Light=#F7F7F8, Dark=#1F2936}"
+                                Padding="12,8">
+                            <Editor Text="{Binding Bio}" Placeholder="Tell about yourself..."
+                                    HeightRequest="80" FontSize="14"
+                                    BackgroundColor="Transparent"
+                                    TextColor="{AppThemeBinding Light=#000000, Dark=#FFFFFF}"
+                                    PlaceholderColor="{AppThemeBinding Light=#999999, Dark=#8B9DAF}" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <!-- Save -->
+                    <Button Text="Save Profile"
+                            Command="{Binding SaveCommand}"
+                            BackgroundColor="{StaticResource PrimaryColor}"
+                            TextColor="White" CornerRadius="24"
+                            HeightRequest="48" FontSize="16" FontAttributes="Bold"
+                            IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBool}}" />
+
+                    <ActivityIndicator IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}"
+                                       Color="{StaticResource PrimaryColor}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Logout -->
+            <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#17212B}"
+                    StrokeShape="RoundRectangle 14"
+                    Stroke="{AppThemeBinding Light=#E8E8E8, Dark=#2B3845}"
+                    Margin="14,10,14,20" Padding="4">
+                <Button Text="Log Out"
+                        Command="{Binding LogoutCommand}"
+                        BackgroundColor="Transparent"
+                        TextColor="#FF3B30"
+                        FontSize="16"
+                        HeightRequest="48" />
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
+    </Grid>
+
+</ContentPage>

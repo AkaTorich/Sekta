@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Sekta.Client/Sekta.Client.csproj" />
+    <Project Path="src/Sekta.Server/Sekta.Server.csproj" />
+    <Project Path="src/Sekta.Shared/Sekta.Shared.csproj" />
+  </Folder>
+</Solution>

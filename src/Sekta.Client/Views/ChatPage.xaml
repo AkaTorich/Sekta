@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Sekta.Client.ViewModels"
+             xmlns:dto="clr-namespace:Sekta.Shared.DTOs;assembly=Sekta.Shared"
+             xmlns:ctrl="clr-namespace:Sekta.Client.Controls"
+             x:Class="Sekta.Client.Views.ChatPage"
+             x:Name="ThisPage"
+             x:DataType="vm:ChatViewModel"
+             Title="{Binding ChatTitle}"
+             BackgroundColor="{AppThemeBinding Light=#E6EBF0, Dark=#0E1621}"
+             Shell.NavBarIsVisible="True">
+
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior IsVisible="False" IsEnabled="False" />
+    </Shell.BackButtonBehavior>
+
+    <Shell.TitleView>
+        <Grid ColumnDefinitions="Auto,Auto,*" ColumnSpacing="8" Padding="0,5">
+            <Button Grid.Column="0" Text="&#x2190;"
+                    Command="{Binding GoBackCommand}"
+                    BackgroundColor="Transparent" TextColor="White"
+                    FontSize="22" WidthRequest="40" HeightRequest="40"
+                    Padding="0" />
+
+            <Border Grid.Column="1" StrokeShape="RoundRectangle 20"
+                    Stroke="Transparent" WidthRequest="40" HeightRequest="40"
+                    BackgroundColor="{StaticResource PrimaryDarkColor}"
+                    Padding="0">
+                <Grid>
+                    <Label Text="{Binding ChatTitle, Converter={StaticResource FirstChar}}"
+                           FontSize="18" FontAttributes="Bold" TextColor="White"
+                           HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Image Source="{Binding ChatAvatarUrl, Converter={StaticResource MediaUrl}}"
+                           Aspect="AspectFill" />
+                </Grid>
+            </Border>
+            <VerticalStackLayout Grid.Column="2" VerticalOptions="Center">
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding OpenChatInfoCommand}" />
+                </VerticalStackLayout.GestureRecognizers>
+                <Label Text="{Binding ChatTitle}" FontSize="16" FontAttributes="Bold" TextColor="White" />
+                <Label Text="{Binding TypingUserName, StringFormat='{0} is typing...'}"
+                       FontSize="11" TextColor="{AppThemeBinding Light=#D0E8F2, Dark=#8B9DAF}"
+                       IsVisible="{Binding IsTyping}" />
+            </VerticalStackLayout>
+        </Grid>
+    </Shell.TitleView>
+
+    <Grid RowDefinitions="Auto,*,Auto,Auto,Auto,Auto">
+
+        <!-- Load earlier messages button -->
+        <Button Grid.Row="0" Text="Load earlier messages"
+                Command="{Binding LoadMoreCommand}"
+                BackgroundColor="Transparent"
+                TextColor="{AppThemeBinding Light=White, Dark=#8B9DAF}"
+                FontSize="13"
+                HorizontalOptions="Center"
+                Padding="0,6"
+                IsVisible="{Binding HasMoreMessages}" />
+
+        <!-- Messages (ScrollView + BindableLayout replaces CollectionView for iOS stability) -->
+        <ScrollView Grid.Row="1" x:Name="MessagesScrollView"
+                    Scrolled="OnScrollViewScrolled"
+                    Margin="6,0">
+            <VerticalStackLayout x:Name="MessagesLayout"
+                                 BindableLayout.ItemsSource="{Binding Messages}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="dto:MessageDto">
+                        <Grid Padding="4,3">
+                            <Border StrokeShape="RoundRectangle 14"
+                                    Stroke="Transparent"
+                                    Padding="10,8"
+                                    MaximumWidthRequest="300"
+                                    HorizontalOptions="{Binding SenderId, Converter={StaticResource SenderToAlignment}}"
+                                    BackgroundColor="{Binding SenderId, Converter={StaticResource SenderToBubbleColor}}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer NumberOfTapsRequired="2"
+                                        x:DataType="{x:Null}"
+                                        Command="{Binding Path=BindingContext.MessageActionCommand, Source={x:Reference ThisPage}}"
+                                        CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+                                <VerticalStackLayout Spacing="2">
+                                    <Label Text="{Binding SenderName}"
+                                           FontSize="12" FontAttributes="Bold"
+                                           TextColor="{StaticResource PrimaryColor}"
+                                           IsVisible="{Binding SenderId, Converter={StaticResource SenderToShowName}}" />
+
+                                    <!-- Forwarded from attribution -->
+                                    <Label Text="{Binding ForwardedFrom, StringFormat='Forwarded from {0}'}"
+                                           FontSize="11" FontAttributes="Italic"
+                                           TextColor="#2AABEE"
+                                           IsVisible="{Binding ForwardedFrom, Converter={StaticResource NullToBool}}" />
+
+                                    <Border BackgroundColor="{AppThemeBinding Light=#F0F0F0, Dark=#0E1621}"
+                                            StrokeShape="RoundRectangle 6"
+                                            Stroke="Transparent" Padding="8,4"
+                                            IsVisible="{Binding ReplyTo, Converter={StaticResource NullToBool}}">
+                                        <Grid ColumnDefinitions="3,*" ColumnSpacing="6">
+                                            <BoxView Grid.Column="0" WidthRequest="3" Color="{StaticResource PrimaryColor}"
+                                                     VerticalOptions="Fill" />
+                                            <VerticalStackLayout Grid.Column="1" Spacing="1">
+                                                <Label Text="{Binding ReplyTo.SenderName}"
+                                                       FontSize="11" FontAttributes="Bold"
+                                                       TextColor="{StaticResource PrimaryColor}"
+                                                       LineBreakMode="TailTruncation" MaxLines="1" />
+                                                <Label Text="{Binding ReplyTo.Content, Converter={StaticResource Truncate}, ConverterParameter=20}"
+                                                       FontSize="11" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryColor}, Dark=#8B9DAF}"
+                                                       MaxLines="1" LineBreakMode="TailTruncation" />
+                                            </VerticalStackLayout>
+                                        </Grid>
+                                    </Border>
+
+                                    <Image Source="{Binding MediaUrl, Converter={StaticResource MediaUrl}}"
+                                           MaximumHeightRequest="250"
+                                           MaximumWidthRequest="250"
+                                           Aspect="AspectFit"
+                                           IsVisible="{Binding MediaUrl, Converter={StaticResource IsNonEmoteImage}}" />
+
+                                    <Image Source="{Binding MediaUrl, Converter={StaticResource MediaUrl}}"
+                                           WidthRequest="80" HeightRequest="80"
+                                           Aspect="AspectFit"
+                                           IsAnimationPlaying="True"
+                                           IsVisible="{Binding MediaUrl, Converter={StaticResource IsEmote}}" />
+
+                                    <HorizontalStackLayout Spacing="5"
+                                        IsVisible="{Binding Type, Converter={StaticResource TypeToFileVisible}}">
+                                        <Label Text="&#128206;" FontSize="14" />
+                                        <Label Text="{Binding FileName}" FontSize="12"
+                                               TextColor="{StaticResource PrimaryColor}"
+                                               TextDecorations="Underline" />
+                                    </HorizontalStackLayout>
+
+                                    <ctrl:LinkedLabel LinkedText="{Binding Content}"
+                                           FontSize="15"
+                                           TextColor="{AppThemeBinding Light=#000000, Dark=#FFFFFF}"
+                                           IsVisible="{Binding Content, Converter={StaticResource NullToBool}}" />
+
+                                    <!-- Link preview card -->
+                                    <ctrl:LinkPreviewView Preview="{Binding LinkPreview}" MessageText="{Binding Content}" />
+
+                                    <HorizontalStackLayout HorizontalOptions="End" Spacing="3">
+                                        <Label Text="edited" FontSize="9"
+                                               TextColor="{AppThemeBinding Light={StaticResource TextSecondaryColor}, Dark=#8B9DAF}"
+                                               IsVisible="{Binding IsEdited}"
+                                               VerticalOptions="Center" />
+                                        <Label Text="{Binding CreatedAt, Converter={StaticResource MessageTime}}"
+                                               FontSize="10"
+                                               TextColor="{AppThemeBinding Light={StaticResource TextSecondaryColor}, Dark=#8B9DAF}"
+                                               VerticalOptions="Center" />
+                                        <Label Text="{Binding Status, Converter={StaticResource StatusToCheck}}"
+                                               TextColor="{Binding Status, Converter={StaticResource StatusToCheckColor}}"
+                                               FontSize="11"
+                                               VerticalOptions="Center"
+                                               IsVisible="{Binding SenderId, Converter={StaticResource SenderToShowCheck}}" />
+                                    </HorizontalStackLayout>
+                                </VerticalStackLayout>
+                            </Border>
+                        </Grid>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Scroll to bottom button (overlays messages area) -->
+        <Button Grid.Row="1"
+                Text="&#x2193;"
+                Clicked="OnScrollDownClicked"
+                IsVisible="{Binding ShowScrollToBottom}"
+                WidthRequest="44" HeightRequest="44"
+                CornerRadius="22"
+                FontSize="20"
+                Padding="0"
+                BackgroundColor="{AppThemeBinding Light=#EEEEEE, Dark=#2B3845}"
+                TextColor="{StaticResource PrimaryColor}"
+                HorizontalOptions="End"
+                VerticalOptions="End"
+                Margin="0,0,16,12"
+                InputTransparent="False"
+                ZIndex="10" />
+
+        <!-- Reply/Edit Preview Bar -->
+        <Border Grid.Row="2" BackgroundColor="{AppThemeBinding Light=#E8F4FD, Dark=#1F2936}"
+                Stroke="Transparent" Padding="0"
+                IsVisible="{Binding ReplyToMessage, Converter={StaticResource NullToBool}}">
+            <Grid ColumnDefinitions="4,Auto,*,Auto" Padding="0,6,10,6" ColumnSpacing="8">
+                <BoxView Grid.Column="0" WidthRequest="4" Color="{StaticResource PrimaryColor}"
+                         VerticalOptions="Fill" />
+                <Label Grid.Column="1" Text="Reply" FontSize="12" FontAttributes="Bold"
+                       TextColor="{StaticResource PrimaryColor}" VerticalOptions="Center"
+                       Margin="8,0,0,0" />
+                <Label Grid.Column="2" Text="{Binding ReplyToMessage.Content}"
+                       FontSize="12" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryColor}, Dark=#8B9DAF}"
+                       LineBreakMode="TailTruncation" MaxLines="1" VerticalOptions="Center" />
+                <Button Grid.Column="3" Text="X" Command="{Binding CancelReplyCommand}"
+                        BackgroundColor="Transparent" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryColor}, Dark=#8B9DAF}"
+                        FontSize="14" WidthRequest="30" HeightRequest="30" Padding="0" />
+            </Grid>
+        </Border>
+
+        <!-- Recording Indicator Bar -->
+        <Grid Grid.Row="3" ColumnDefinitions="Auto,Auto,*,Auto"
+              BackgroundColor="{AppThemeBinding Light=#FFEBEE, Dark=#3B1A1A}" Padding="12,8" ColumnSpacing="8"
+              IsVisible="{Binding IsRecording}">
+            <BoxView Grid.Column="0" Color="Red" WidthRequest="10" HeightRequest="10"
+                     CornerRadius="5" VerticalOptions="Center" />
+            <Label Grid.Column="1" Text="Recording..." FontSize="14" FontAttributes="Bold"
+                   TextColor="#D32F2F" VerticalOptions="Center" />
+            <Label Grid.Column="2" Text="{Binding RecordingDurationText}" FontSize="14"
+                   TextColor="#D32F2F" VerticalOptions="Center" HorizontalOptions="End" />
+            <Button Grid.Column="3" Text="Stop"
+                    Command="{Binding RecordVoiceCommand}"
+                    BackgroundColor="#D32F2F" TextColor="White"
+                    CornerRadius="14" FontSize="13"
+                    HeightRequest="32" Padding="12,0" />
+        </Grid>
+
+        <!-- Input Area -->
+        <Border Grid.Row="4" BackgroundColor="{AppThemeBinding Light=White, Dark=#17212B}"
+                Stroke="Transparent" Padding="6,4"
+                IsVisible="{Binding IsRecording, Converter={StaticResource InverseBool}}">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="2">
+                <Button Grid.Column="0" Text="+"
+                        Command="{Binding AttachFileCommand}"
+                        BackgroundColor="Transparent"
+                        TextColor="{StaticResource PrimaryColor}"
+                        FontSize="24" WidthRequest="38" HeightRequest="42"
+                        Padding="0" />
+
+                <Button Grid.Column="1" Text="&#9786;"
+                        Command="{Binding ToggleEmotePanelCommand}"
+                        BackgroundColor="Transparent"
+                        TextColor="{AppThemeBinding Light={StaticResource TextSecondaryColor}, Dark=#8B9DAF}"
+                        FontSize="20" WidthRequest="38" HeightRequest="42"
+                        Padding="0" />
+
+                <Border Grid.Column="2" StrokeShape="RoundRectangle 20"
+                        Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#2B3845}"
+                        BackgroundColor="{AppThemeBinding Light=#F7F7F8, Dark=#1F2936}"
+                        Padding="14,0" Margin="2,3">
+                    <Entry Placeholder="Message..."
+                           Text="{Binding MessageText}"
+                           ReturnType="Send"
+                           ReturnCommand="{Binding SendMessageCommand}"
+                           FontSize="15"
+                           BackgroundColor="Transparent"
+                           TextColor="{AppThemeBinding Light=#000000, Dark=#FFFFFF}"
+                           PlaceholderColor="{AppThemeBinding Light=#707070, Dark=#8B9DAF}" />
+                </Border>
+
+                <Button Grid.Column="3" Text="Mic"
+                        Command="{Binding RecordVoiceCommand}"
+                        BackgroundColor="Transparent"
+                        TextColor="{AppThemeBinding Light={StaticResource TextSecondaryColor}, Dark=#8B9DAF}"
+                        FontSize="12" WidthRequest="38" HeightRequest="42"
+                        Padding="0" />
+
+                <Button Grid.Column="4" Text="&#10148;"
+                        Command="{Binding SendMessageCommand}"
+                        BackgroundColor="{StaticResource PrimaryColor}"
+                        TextColor="White"
+                        CornerRadius="21"
+                        WidthRequest="42" HeightRequest="42"
+                        FontSize="18" Padding="0" />
+            </Grid>
+        </Border>
+
+        <!-- Emote Picker Panel -->
+        <ScrollView Grid.Row="5"
+                    IsVisible="{Binding IsEmotePanelOpen}"
+                    HeightRequest="220"
+                    BackgroundColor="{AppThemeBinding Light=#F7F7F8, Dark=#17212B}">
+            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Emotes}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="x:String">
+                        <Grid Padding="4" HeightRequest="56" WidthRequest="56">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    x:DataType="{x:Null}"
+                                    Command="{Binding Path=BindingContext.SendEmoteCommand, Source={x:Reference ThisPage}}"
+                                    CommandParameter="{Binding .}" />
+                            </Grid.GestureRecognizers>
+                            <Image Source="{Binding ., Converter={StaticResource EmoteSource}}"
+                                   WidthRequest="44" HeightRequest="44"
+                                   Aspect="AspectFit"
+                                   IsAnimationPlaying="True"
+                                   HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Grid>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+
+</ContentPage>

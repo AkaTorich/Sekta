@@ -1,0 +1,275 @@
+name: Build Sekta Messenger
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  MAUI_WORKLOAD_VERSION: '9.0.306'
+
+jobs:
+  # ─── Server build (runs on Linux) ───
+  build-server:
+    name: Server (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore
+        run: dotnet restore src/Sekta.Server/Sekta.Server.csproj
+
+      - name: Build
+        run: dotnet build src/Sekta.Server/Sekta.Server.csproj -c Release --no-restore
+
+      - name: Publish (linux-x64)
+        run: >
+          dotnet publish src/Sekta.Server/Sekta.Server.csproj
+          -c Release
+          -r linux-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -o artifacts/server
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-linux-x64
+          path: artifacts/server/
+
+  # ─── Client — Android ───
+  build-android:
+    name: Client (Android ${{ matrix.rid }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - rid: android-arm64
+            artifact: client-android-arm64
+          - rid: android-x64
+            artifact: client-android-x64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Install MAUI workload
+        run: |
+          dotnet workload config --update-mode workload-set
+          dotnet workload install maui-android --version ${{ env.MAUI_WORKLOAD_VERSION }}
+
+      - name: Decode keystore
+        run: echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 -d > sekta.keystore
+
+      - name: Publish APK (${{ matrix.rid }})
+        run: >
+          dotnet publish src/Sekta.Client/Sekta.Client.csproj
+          -c Release
+          -f net9.0-android
+          -r ${{ matrix.rid }}
+          -p:CiTargetFramework=net9.0-android
+          -p:AndroidPackageFormat=apk
+          -p:AndroidKeyStore=true
+          -p:AndroidSigningKeyStore=${{ github.workspace }}/sekta.keystore
+          -p:AndroidSigningKeyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          -p:AndroidSigningKeyPass=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          -p:AndroidSigningStorePass=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          -o artifacts/android
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: artifacts/android/**/*.apk
+
+  # ─── Client — Windows ───
+  build-windows-client:
+    name: Client (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Install MAUI workload
+        run: dotnet workload install maui-windows --skip-sign-check
+
+      - name: Publish Client (win-x64)
+        run: >
+          dotnet publish src/Sekta.Client/Sekta.Client.csproj
+          -c Release
+          -f net9.0-windows10.0.19041.0
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:WindowsPackageType=None
+          -p:CiTargetFramework=net9.0-windows10.0.19041.0
+          -o artifacts/client-windows
+
+      - name: Upload Client artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-windows-x64
+          path: artifacts/client-windows/
+
+  # ─── Server — Windows ───
+  build-windows-server:
+    name: Server (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Publish Server (win-x64)
+        run: >
+          dotnet publish src/Sekta.Server/Sekta.Server.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -o artifacts/server-windows
+
+      - name: Upload Server artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-windows-x64
+          path: artifacts/server-windows/
+
+  # ─── Client — macOS ───
+  build-macos:
+    name: Client (macOS ${{ matrix.rid }})
+    runs-on: macos-26
+    strategy:
+      matrix:
+        include:
+          - rid: maccatalyst-arm64
+            artifact: client-macos-arm64
+          - rid: maccatalyst-x64
+            artifact: client-macos-x64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Select Xcode 26.0
+        run: sudo xcode-select -s /Applications/Xcode_26.0.1.app/Contents/Developer
+
+      - name: Install MAUI workloads
+        run: |
+          dotnet workload config --update-mode workload-set
+          dotnet workload install maui --version ${{ env.MAUI_WORKLOAD_VERSION }}
+
+      - name: Publish macOS (${{ matrix.rid }})
+        run: >
+          dotnet publish src/Sekta.Client/Sekta.Client.csproj
+          -c Release
+          -f net9.0-maccatalyst
+          -r ${{ matrix.rid }}
+          -p:CiTargetFramework=net9.0-maccatalyst
+          -p:CodesignKey="-"
+          -o artifacts/macos
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: artifacts/macos/
+
+  # ─── Client — macOS Sequoia (macos-15 runner, Xcode 16) ───
+  build-macos-sequoia:
+    name: Client (macOS Sequoia ${{ matrix.rid }})
+    runs-on: macos-15
+    strategy:
+      matrix:
+        include:
+          - rid: maccatalyst-arm64
+            artifact: client-macos-sequoia-arm64
+          - rid: maccatalyst-x64
+            artifact: client-macos-sequoia-x64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Install MAUI workloads (Xcode 16 compatible)
+        run: |
+          dotnet workload config --update-mode workload-set
+          dotnet workload install maui --version 9.0.300
+
+      - name: Publish macOS Sequoia (${{ matrix.rid }})
+        run: >
+          dotnet publish src/Sekta.Client/Sekta.Client.csproj
+          -c Release
+          -f net9.0-maccatalyst
+          -r ${{ matrix.rid }}
+          -p:CiTargetFramework=net9.0-maccatalyst
+          -p:CodesignKey="-"
+          -o artifacts/macos-sequoia
+
+      - name: Upload macOS Sequoia artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: artifacts/macos-sequoia/
+
+  # ─── Client — iOS (ad-hoc signed, re-sign via Sideloadly for device) ───
+  build-ios:
+    name: Client (iOS)
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Select Xcode 26.0
+        run: sudo xcode-select -s /Applications/Xcode_26.0.1.app/Contents/Developer
+
+      - name: Install MAUI workloads
+        run: |
+          dotnet workload config --update-mode workload-set
+          dotnet workload install maui --version ${{ env.MAUI_WORKLOAD_VERSION }}
+
+      - name: Publish iOS (ad-hoc signed)
+        run: >
+          dotnet publish src/Sekta.Client/Sekta.Client.csproj
+          -c Release
+          -f net9.0-ios
+          -r ios-arm64
+          -p:CiTargetFramework=net9.0-ios
+          -p:CodesignKey="-"
+          -o artifacts/ios
+
+      - name: Upload iOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-ios
+          path: artifacts/ios/Sekta.Client.ipa

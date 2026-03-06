@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="Sekta.Client.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:Sekta.Client.Views"
+    Title="Sekta Messenger"
+    Shell.FlyoutBehavior="Disabled"
+    Shell.BackgroundColor="{AppThemeBinding Light=#2AABEE, Dark=#17212B}"
+    Shell.ForegroundColor="White"
+    Shell.TitleColor="White">
+
+    <!-- Auth Routes -->
+    <ShellContent
+        Route="login"
+        ContentTemplate="{DataTemplate views:LoginPage}"
+        Shell.NavBarIsVisible="False"
+        Shell.TabBarIsVisible="False" />
+
+    <ShellContent
+        Route="register"
+        ContentTemplate="{DataTemplate views:RegisterPage}"
+        Shell.NavBarIsVisible="False"
+        Shell.TabBarIsVisible="False" />
+
+    <!-- Main TabBar -->
+    <TabBar Route="main" Shell.NavBarIsVisible="False">
+        <ShellContent
+            Route="chats"
+            Title="Chats"
+            Icon="{OnPlatform Default='chat_icon.png'}"
+            ContentTemplate="{DataTemplate views:ChatsListPage}" />
+
+        <ShellContent
+            Route="groups"
+            Title="Groups"
+            Icon="{OnPlatform Default='groups_icon.png'}"
+            ContentTemplate="{DataTemplate views:GroupsPage}" />
+
+        <ShellContent
+            Route="contacts"
+            Title="Contacts"
+            Icon="{OnPlatform Default='contacts_icon.png'}"
+            ContentTemplate="{DataTemplate views:ContactsPage}" />
+
+        <ShellContent
+            Route="profile"
+            Title="Profile"
+            Icon="{OnPlatform Default='profile_icon.png'}"
+            ContentTemplate="{DataTemplate views:ProfilePage}" />
+
+        <ShellContent
+            Route="settings"
+            Title="Settings"
+            Icon="{OnPlatform Default='settings_icon.png'}"
+            ContentTemplate="{DataTemplate views:SettingsPage}" />
+    </TabBar>
+
+</Shell>

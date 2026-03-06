@@ -1,0 +1,54 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:converters="clr-namespace:Sekta.Client.Converters"
+             x:Class="Sekta.Client.App">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
+                <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Converters -->
+            <converters:BoolToColorConverter x:Key="BoolToColor" />
+            <converters:InverseBoolConverter x:Key="InverseBool" />
+            <converters:MessageAlignmentConverter x:Key="MessageAlignment" />
+            <converters:StatusToColorConverter x:Key="StatusToColor" />
+            <converters:NullToBoolConverter x:Key="NullToBool" />
+            <converters:DateTimeToStringConverter x:Key="DateTimeToString" />
+            <converters:MessageTimeConverter x:Key="MessageTime" />
+            <converters:SenderToAlignmentConverter x:Key="SenderToAlignment" />
+            <converters:SenderToBubbleColorConverter x:Key="SenderToBubbleColor" />
+            <converters:SenderToIsOwnConverter x:Key="SenderToIsOwn" />
+            <converters:SenderToShowNameConverter x:Key="SenderToShowName" />
+            <converters:MessageStatusToCheckConverter x:Key="StatusToCheck" />
+            <converters:MessageStatusToColorConverter x:Key="StatusToCheckColor" />
+            <converters:SenderToShowCheckConverter x:Key="SenderToShowCheck" />
+            <converters:MediaUrlConverter x:Key="MediaUrl" />
+            <converters:MessageTypeToImageVisibleConverter x:Key="TypeToImageVisible" />
+            <converters:MessageTypeToFileVisibleConverter x:Key="TypeToFileVisible" />
+            <converters:LastMessagePreviewConverter x:Key="LastMessagePreview" />
+            <converters:FirstCharConverter x:Key="FirstChar" />
+            <converters:EmoteSourceConverter x:Key="EmoteSource" />
+            <converters:IsEmoteConverter x:Key="IsEmote" />
+            <converters:IsNonEmoteImageConverter x:Key="IsNonEmoteImage" />
+            <converters:TruncateConverter x:Key="Truncate" />
+
+            <!-- Colors -->
+            <Color x:Key="PrimaryColor">#2AABEE</Color>
+            <Color x:Key="PrimaryDarkColor">#1E88C9</Color>
+            <Color x:Key="AccentColor">#2AABEE</Color>
+            <Color x:Key="OutgoingBubbleColor">#EFFDDE</Color>
+            <Color x:Key="IncomingBubbleColor">#FFFFFF</Color>
+            <Color x:Key="ChatBackgroundColor">#E6EBF0</Color>
+            <Color x:Key="SidebarColor">#FFFFFF</Color>
+            <Color x:Key="TextPrimaryColor">#000000</Color>
+            <Color x:Key="TextSecondaryColor">#707579</Color>
+            <Color x:Key="OnlineColor">#4DCD5E</Color>
+            <Color x:Key="PageBackgroundColor">#FFFFFF</Color>
+            <Color x:Key="SurfaceColor">#F5F5F5</Color>
+            <Color x:Key="SeparatorColor">#E8E8E8</Color>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

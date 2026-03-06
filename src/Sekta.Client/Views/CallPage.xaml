@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Sekta.Client.ViewModels"
+             x:Class="Sekta.Client.Views.CallPage"
+             x:DataType="vm:CallViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{AppThemeBinding Light=#1B2838, Dark=#0E1621}">
+
+    <Grid RowDefinitions="*,Auto,Auto" Padding="30">
+        <!-- Caller Info -->
+        <VerticalStackLayout Grid.Row="0" VerticalOptions="Center" HorizontalOptions="Center" Spacing="16">
+            <!-- Avatar with glow effect -->
+            <Border StrokeShape="RoundRectangle 65"
+                    Stroke="#40FFFFFF" StrokeThickness="3"
+                    WidthRequest="130" HeightRequest="130"
+                    Padding="0"
+                    HorizontalOptions="Center"
+                    Shadow="{OnPlatform Default={Shadow Brush=#402AABEE, Offset='0,0', Radius=20, Opacity=0.4}}">
+                <Image Source="{Binding CallerAvatarUrl, TargetNullValue='default_avatar.png'}"
+                       Aspect="AspectFill" />
+            </Border>
+
+            <Label Text="{Binding CallerName}"
+                   FontSize="28" FontAttributes="Bold" TextColor="White"
+                   HorizontalOptions="Center" />
+
+            <Label Text="{Binding CallStatus}"
+                   FontSize="16" TextColor="{AppThemeBinding Light=#8BA4B4, Dark=#8B9DAF}"
+                   HorizontalOptions="Center" />
+
+            <Label Text="{Binding CallDuration}"
+                   FontSize="22" TextColor="White"
+                   HorizontalOptions="Center"
+                   IsVisible="{Binding IsCallActive}" />
+        </VerticalStackLayout>
+
+        <!-- Call Controls (when active) -->
+        <HorizontalStackLayout Grid.Row="1" HorizontalOptions="Center" Spacing="24"
+                                Margin="0,0,0,24" IsVisible="{Binding IsCallActive}">
+            <VerticalStackLayout Spacing="6" HorizontalOptions="Center">
+                <Button Text="&#128263;"
+                        Command="{Binding ToggleMuteCommand}"
+                        BackgroundColor="{AppThemeBinding Light=#3A4A5A, Dark=#1F2936}" TextColor="White"
+                        CornerRadius="30" WidthRequest="60" HeightRequest="60"
+                        FontSize="22" Padding="0" />
+                <Label Text="Mute" FontSize="11" TextColor="#8B9DAF" HorizontalOptions="Center" />
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="6" HorizontalOptions="Center">
+                <Button Text="&#128264;"
+                        Command="{Binding ToggleSpeakerCommand}"
+                        BackgroundColor="{AppThemeBinding Light=#3A4A5A, Dark=#1F2936}" TextColor="White"
+                        CornerRadius="30" WidthRequest="60" HeightRequest="60"
+                        FontSize="22" Padding="0" />
+                <Label Text="Speaker" FontSize="11" TextColor="#8B9DAF" HorizontalOptions="Center" />
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="6" HorizontalOptions="Center"
+                                  IsVisible="{Binding IsVideoCall}">
+                <Button Text="&#127909;"
+                        Command="{Binding ToggleVideoCommand}"
+                        BackgroundColor="{AppThemeBinding Light=#3A4A5A, Dark=#1F2936}" TextColor="White"
+                        CornerRadius="30" WidthRequest="60" HeightRequest="60"
+                        FontSize="22" Padding="0" />
+                <Label Text="Video" FontSize="11" TextColor="#8B9DAF" HorizontalOptions="Center" />
+            </VerticalStackLayout>
+        </HorizontalStackLayout>
+
+        <!-- Answer/Reject (incoming) or End Call -->
+        <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,0,0,40">
+            <!-- Incoming call buttons -->
+            <VerticalStackLayout Grid.Column="0" Spacing="8" HorizontalOptions="Center"
+                                  IsVisible="{Binding IsIncoming}">
+                <Button Text="&#10060;"
+                        Command="{Binding RejectCallCommand}"
+                        BackgroundColor="#FF3B30" TextColor="White"
+                        CornerRadius="32" WidthRequest="64" HeightRequest="64"
+                        FontSize="24" Padding="0" />
+                <Label Text="Reject" FontSize="12" TextColor="#FF3B30" HorizontalOptions="Center" />
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Column="1" Spacing="8" HorizontalOptions="Center"
+                                  IsVisible="{Binding IsIncoming}">
+                <Button Text="&#9742;"
+                        Command="{Binding AnswerCallCommand}"
+                        BackgroundColor="#4DCD5E" TextColor="White"
+                        CornerRadius="32" WidthRequest="64" HeightRequest="64"
+                        FontSize="24" Padding="0" />
+                <Label Text="Answer" FontSize="12" TextColor="#4DCD5E" HorizontalOptions="Center" />
+            </VerticalStackLayout>
+
+            <!-- End call button (when active or outgoing) -->
+            <VerticalStackLayout Grid.ColumnSpan="2" Spacing="8" HorizontalOptions="Center"
+                                  IsVisible="{Binding IsIncoming, Converter={StaticResource InverseBool}}">
+                <Button Text="&#10060;"
+                        Command="{Binding EndCallCommand}"
+                        BackgroundColor="#FF3B30" TextColor="White"
+                        CornerRadius="32" WidthRequest="64" HeightRequest="64"
+                        FontSize="24" Padding="0" />
+                <Label Text="End Call" FontSize="12" TextColor="#FF3B30" HorizontalOptions="Center" />
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
+
+</ContentPage>

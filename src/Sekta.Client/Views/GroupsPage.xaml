@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Sekta.Client.ViewModels"
+             xmlns:dto="clr-namespace:Sekta.Shared.DTOs;assembly=Sekta.Shared"
+             xmlns:ctrl="clr-namespace:Sekta.Client.Controls"
+             x:Class="Sekta.Client.Views.GroupsPage"
+             x:DataType="vm:GroupsViewModel"
+             Title="Groups"
+             BackgroundColor="{AppThemeBinding Light=White, Dark=#17212B}">
+
+    <Grid ColumnDefinitions="{OnIdiom Desktop='360,*', Phone='*'}">
+
+        <!-- ════ Col 0: Group list ════ -->
+        <Grid Grid.Column="0" RowDefinitions="*">
+            <RefreshView Command="{Binding RefreshCommand}"
+                         IsRefreshing="{Binding IsRefreshing}">
+                <CollectionView ItemsSource="{Binding Groups}"
+                                SelectionMode="None">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="dto:ChatDto">
+                            <Grid Padding="12,10" ColumnDefinitions="54,*" ColumnSpacing="12"
+                                  BackgroundColor="{AppThemeBinding Light=White, Dark=#17212B}">
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:GroupsViewModel}}, Path=OpenGroupCommand}"
+                                        CommandParameter="{Binding .}" />
+                                </Grid.GestureRecognizers>
+
+                                <!-- Avatar circle with initial -->
+                                <Border Grid.Column="0" StrokeShape="RoundRectangle 27"
+                                        Stroke="Transparent"
+                                        BackgroundColor="#5B9BD5"
+                                        WidthRequest="54" HeightRequest="54"
+                                        Padding="0" VerticalOptions="Center">
+                                    <Grid>
+                                        <Label Text="{Binding Title, Converter={StaticResource FirstChar}}"
+                                               FontSize="22" FontAttributes="Bold"
+                                               TextColor="White"
+                                               HorizontalOptions="Center" VerticalOptions="Center" />
+                                        <Image Source="{Binding AvatarUrl, Converter={StaticResource MediaUrl}}"
+                                               Aspect="AspectFill" />
+                                    </Grid>
+                                </Border>
+
+                                <!-- Right side: two rows -->
+                                <Grid Grid.Column="1" RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto"
+                                      VerticalOptions="Center" RowSpacing="3">
+
+                                    <Label Grid.Row="0" Grid.Column="0"
+                                           Text="{Binding Title}"
+                                           FontSize="16" FontAttributes="Bold"
+                                           TextColor="{AppThemeBinding Light={StaticResource TextPrimaryColor}, Dark=#FFFFFF}"
+                                           LineBreakMode="TailTruncation"
+                                           VerticalOptions="Center" />
+
+                                    <Label Grid.Row="0" Grid.Column="1"
+                                           Text="{Binding LastMessage.CreatedAt, Converter={StaticResource DateTimeToString}}"
+                                           FontSize="12"
+                                           TextColor="{AppThemeBinding Light={StaticResource TextSecondaryColor}, Dark=#8B9DAF}"
+                                           VerticalOptions="Center" />
+
+                                    <Label Grid.Row="1" Grid.Column="0"
+                                           Text="{Binding LastMessage, Converter={StaticResource LastMessagePreview}}"
+                                           FontSize="14"
+                                           TextColor="{AppThemeBinding Light={StaticResource TextSecondaryColor}, Dark=#8B9DAF}"
+                                           LineBreakMode="TailTruncation"
+                                           MaxLines="1"
+                                           VerticalOptions="Center" />
+
+                                    <Border Grid.Row="1" Grid.Column="1"
+                                            BackgroundColor="{StaticResource PrimaryColor}"
+                                            StrokeShape="RoundRectangle 11"
+                                            Stroke="Transparent"
+                                            Padding="7,2"
+                                            MinimumWidthRequest="24"
+                                            HeightRequest="22"
+                                            IsVisible="{Binding UnreadCount, Converter={StaticResource NullToBool}}"
+                                            HorizontalOptions="End" VerticalOptions="Center">
+                                        <Label Text="{Binding UnreadCount}"
+                                               TextColor="White" FontSize="12"
+                                               HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </Border>
+                                </Grid>
+
+                                <!-- Separator -->
+                                <BoxView Grid.Column="1"
+                                         HeightRequest="0.5"
+                                         Color="{AppThemeBinding Light=#E8E8E8, Dark=#2B3845}"
+                                         VerticalOptions="End" />
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+
+                    <CollectionView.EmptyView>
+                        <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="10"
+                                             Padding="30">
+                            <Label Text="No groups yet"
+                                   FontSize="18" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryColor}, Dark=#8B9DAF}"
+                                   HorizontalOptions="Center" />
+                            <Label Text="Create a group to start chatting"
+                                   FontSize="14" TextColor="{AppThemeBinding Light={StaticResource TextSecondaryColor}, Dark=#8B9DAF}"
+                                   HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </CollectionView.EmptyView>
+                </CollectionView>
+            </RefreshView>
+
+            <!-- FAB - Create Group -->
+            <Button Grid.Row="0"
+                    Text="+"
+                    Command="{Binding CreateGroupCommand}"
+                    FontSize="28"
+                    BackgroundColor="{StaticResource PrimaryColor}"
+                    TextColor="White"
+                    CornerRadius="30"
+                    WidthRequest="60" HeightRequest="60"
+                    HorizontalOptions="End" VerticalOptions="End"
+                    Margin="0,0,20,20"
+                    Shadow="{OnPlatform Default={Shadow Brush=Black, Offset='2,4', Radius=8, Opacity=0.3}}" />
+        </Grid>
+
+        <!-- ════ Col 1: Embedded Chat (Desktop only) ════ -->
+        <Grid Grid.Column="{OnIdiom Desktop=1, Phone=0}"
+              x:Name="ChatPanel"
+              IsVisible="{OnIdiom Desktop=True, Phone=False}"
+              BackgroundColor="{AppThemeBinding Light=#E6EBF0, Dark=#0E1621}">
+
+            <!-- Placeholder when no chat is open -->
+            <VerticalStackLayout x:Name="NoChatPlaceholder"
+                                 VerticalOptions="Center" HorizontalOptions="Center" Spacing="10">
+                <Label Text="Select a group"
+                       FontSize="20"
+                       TextColor="{AppThemeBinding Light=#888, Dark=#8B9DAF}"
+                       HorizontalOptions="Center" />
+                <Label Text="Choose a group from the list"
+                       FontSize="14"
+                       TextColor="{AppThemeBinding Light=#AAA, Dark=#5A6A7A}"
+                       HorizontalOptions="Center" />
+            </VerticalStackLayout>
+
+            <!-- Embedded chat view -->
+            <ctrl:EmbeddedChatView x:Name="EmbeddedChat"
+                                   IsVisible="False" />
+        </Grid>
+    </Grid>
+
+</ContentPage>

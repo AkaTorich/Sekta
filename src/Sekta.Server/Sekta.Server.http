@@ -1,0 +1,6 @@
+@Sekta.Server_HostAddress = http://localhost:5223
+
+GET {{Sekta.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
