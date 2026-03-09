@@ -18,4 +18,5 @@ public static class ApiRoutes
     public const string Bot = $"{Base}/bot";
     public const string Notifications = $"{Base}/notifications";
     public const string Folders = $"{Base}/folders";
+    public const string Keys = $"{Base}/keys";
 }

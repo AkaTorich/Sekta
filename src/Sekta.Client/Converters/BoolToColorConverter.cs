@@ -291,6 +291,12 @@ public class MediaUrlConverter : IValueConverter
             return ImageSource.FromStream(() => assembly.GetManifestResourceStream(resourceName)!);
         }
 
+        // Handle local cached files (absolute paths from FileCacheService)
+        if (Path.IsPathRooted(url) && File.Exists(url))
+        {
+            return ImageSource.FromFile(url);
+        }
+
         string fullUrl;
         if (url.StartsWith("http"))
         {

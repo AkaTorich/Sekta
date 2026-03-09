@@ -15,6 +15,7 @@ public interface IApiService
     Task PutAsync(string endpoint, object? body = null);
     Task DeleteAsync(string endpoint);
     Task<(string url, string fileName, long size)> UploadFileAsync(Stream stream, string fileName);
+    Task<byte[]?> DownloadBytesAsync(string endpoint);
 }
 
 public class ApiService : IApiService
@@ -116,6 +117,14 @@ public class ApiService : IApiService
         var result = await response.Content.ReadFromJsonAsync<UploadResult>(_jsonOptions);
 
         return (result?.Url ?? string.Empty, result?.FileName ?? fileName, result?.Size ?? 0);
+    }
+
+    public async Task<byte[]?> DownloadBytesAsync(string endpoint)
+    {
+        var request = CreateRequest(HttpMethod.Get, endpoint);
+        var response = await SendRequestAsync(request);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsByteArrayAsync();
     }
 
     private HttpRequestMessage CreateRequest(HttpMethod method, string endpoint)

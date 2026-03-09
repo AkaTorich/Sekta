@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 
 namespace Sekta.Client.Services;
 
@@ -42,6 +43,41 @@ public interface IEncryptionService
     /// Returns null if no key pair has been stored yet.
     /// </summary>
     Task<(byte[] publicKey, byte[] privateKey)?> LoadKeyPair();
+
+    /// <summary>
+    /// Load or generate keys and cache them in memory. Returns true on success.
+    /// </summary>
+    Task<bool> EnsureKeysLoadedAsync();
+
+    /// <summary>The loaded public key (available after EnsureKeysLoadedAsync).</summary>
+    byte[]? MyPublicKey { get; }
+
+    /// <summary>The loaded private key (available after EnsureKeysLoadedAsync).</summary>
+    byte[]? MyPrivateKey { get; }
+
+    /// <summary>Check if a message content string is an E2E encrypted payload.</summary>
+    bool IsEncryptedContent(string? content);
+
+    /// <summary>Pack encrypted data into a JSON string for the Content field.</summary>
+    string PackEncryptedContent(byte[] ciphertext, byte[] nonce, byte[] tag, byte[] senderPublicKey);
+
+    /// <summary>Try to unpack an encrypted content string. Returns null if not encrypted.</summary>
+    (byte[] ciphertext, byte[] nonce, byte[] tag, byte[] senderPublicKey)? TryUnpackEncryptedContent(string? content);
+
+    /// <summary>Encrypt raw bytes (for files).</summary>
+    (byte[] ciphertext, byte[] nonce, byte[] tag) EncryptBytes(byte[] data, byte[] sharedSecret);
+
+    /// <summary>Decrypt raw bytes (for files).</summary>
+    byte[] DecryptBytes(byte[] ciphertext, byte[] nonce, byte[] tag, byte[] sharedSecret);
+
+    /// <summary>Check if content is encrypted file metadata.</summary>
+    bool IsEncryptedFileContent(string? content);
+
+    /// <summary>Pack encrypted file metadata into Content field.</summary>
+    string PackEncryptedFileContent(byte[] nonce, byte[] tag, byte[] senderPublicKey, string? caption);
+
+    /// <summary>Unpack encrypted file metadata.</summary>
+    (byte[] nonce, byte[] tag, byte[] senderPublicKey, string? caption)? TryUnpackEncryptedFileContent(string? content);
 }
 
 public class EncryptionService : IEncryptionService
@@ -184,5 +220,175 @@ public class EncryptionService : IEncryptionService
         return (
             Convert.FromBase64String(publicKeyBase64),
             Convert.FromBase64String(privateKeyBase64));
+    }
+
+    // ──────────────────────────────────────────────
+    //  Key lifecycle
+    // ──────────────────────────────────────────────
+
+    public byte[]? MyPublicKey { get; private set; }
+    public byte[]? MyPrivateKey { get; private set; }
+
+    public async Task<bool> EnsureKeysLoadedAsync()
+    {
+        if (MyPublicKey is not null && MyPrivateKey is not null)
+            return true;
+
+        try
+        {
+            var keys = await LoadKeyPair();
+            if (keys is null)
+            {
+                var (pub, priv) = GenerateKeyPair();
+                await SaveKeyPair(pub, priv);
+                MyPublicKey = pub;
+                MyPrivateKey = priv;
+            }
+            else
+            {
+                MyPublicKey = keys.Value.publicKey;
+                MyPrivateKey = keys.Value.privateKey;
+            }
+            return true;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[E2E] Failed to load/generate keys: {ex.Message}");
+            return false;
+        }
+    }
+
+    // ──────────────────────────────────────────────
+    //  Content packing (server-transparent)
+    // ──────────────────────────────────────────────
+
+    private const string E2ePrefix = "{\"e2e\":1,";
+
+    public bool IsEncryptedContent(string? content)
+        => content is not null && content.StartsWith(E2ePrefix, StringComparison.Ordinal);
+
+    public string PackEncryptedContent(byte[] ciphertext, byte[] nonce, byte[] tag, byte[] senderPublicKey)
+    {
+        return JsonSerializer.Serialize(new
+        {
+            e2e = 1,
+            c = Convert.ToBase64String(ciphertext),
+            n = Convert.ToBase64String(nonce),
+            t = Convert.ToBase64String(tag),
+            k = Convert.ToBase64String(senderPublicKey)
+        });
+    }
+
+    public (byte[] ciphertext, byte[] nonce, byte[] tag, byte[] senderPublicKey)? TryUnpackEncryptedContent(string? content)
+    {
+        if (!IsEncryptedContent(content))
+            return null;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(content!);
+            var root = doc.RootElement;
+            return (
+                Convert.FromBase64String(root.GetProperty("c").GetString()!),
+                Convert.FromBase64String(root.GetProperty("n").GetString()!),
+                Convert.FromBase64String(root.GetProperty("t").GetString()!),
+                Convert.FromBase64String(root.GetProperty("k").GetString()!)
+            );
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    // ──────────────────────────────────────────────
+    //  File encryption (AES-256-GCM on raw bytes)
+    // ──────────────────────────────────────────────
+
+    public (byte[] ciphertext, byte[] nonce, byte[] tag) EncryptBytes(byte[] data, byte[] sharedSecret)
+    {
+        var nonce = RandomNumberGenerator.GetBytes(NonceSizeBytes);
+        var ciphertext = new byte[data.Length];
+        var tag = new byte[TagSizeBytes];
+
+        var messageKey = HKDF.DeriveKey(
+            HashAlgorithmName.SHA256,
+            ikm: sharedSecret,
+            outputLength: KeySizeBytes,
+            salt: nonce,
+            info: HkdfInfo);
+
+        using var aes = new AesGcm(messageKey, TagSizeBytes);
+        aes.Encrypt(nonce, data, ciphertext, tag);
+
+        CryptographicOperations.ZeroMemory(messageKey);
+
+        return (ciphertext, nonce, tag);
+    }
+
+    public byte[] DecryptBytes(byte[] ciphertext, byte[] nonce, byte[] tag, byte[] sharedSecret)
+    {
+        var plaintext = new byte[ciphertext.Length];
+
+        var messageKey = HKDF.DeriveKey(
+            HashAlgorithmName.SHA256,
+            ikm: sharedSecret,
+            outputLength: KeySizeBytes,
+            salt: nonce,
+            info: HkdfInfo);
+
+        using var aes = new AesGcm(messageKey, TagSizeBytes);
+        aes.Decrypt(nonce, ciphertext, tag, plaintext);
+
+        CryptographicOperations.ZeroMemory(messageKey);
+
+        return plaintext;
+    }
+
+    // ──────────────────────────────────────────────
+    //  Encrypted file metadata packing
+    // ──────────────────────────────────────────────
+
+    private const string E2eFilePrefix = "{\"e2e_file\":1,";
+
+    public bool IsEncryptedFileContent(string? content)
+        => content is not null && content.StartsWith(E2eFilePrefix, StringComparison.Ordinal);
+
+    public string PackEncryptedFileContent(byte[] nonce, byte[] tag, byte[] senderPublicKey, string? caption)
+    {
+        return JsonSerializer.Serialize(new
+        {
+            e2e_file = 1,
+            n = Convert.ToBase64String(nonce),
+            t = Convert.ToBase64String(tag),
+            k = Convert.ToBase64String(senderPublicKey),
+            cap = caption
+        });
+    }
+
+    public (byte[] nonce, byte[] tag, byte[] senderPublicKey, string? caption)? TryUnpackEncryptedFileContent(string? content)
+    {
+        if (!IsEncryptedFileContent(content))
+            return null;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(content!);
+            var root = doc.RootElement;
+            string? caption = null;
+            if (root.TryGetProperty("cap", out var capEl) && capEl.ValueKind == JsonValueKind.String)
+                caption = capEl.GetString();
+
+            return (
+                Convert.FromBase64String(root.GetProperty("n").GetString()!),
+                Convert.FromBase64String(root.GetProperty("t").GetString()!),
+                Convert.FromBase64String(root.GetProperty("k").GetString()!),
+                caption
+            );
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

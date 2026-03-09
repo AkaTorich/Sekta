@@ -32,6 +32,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<InAppNotificationService>();
         builder.Services.AddSingleton<IMessageCacheService, MessageCacheService>();
         builder.Services.AddSingleton<IChatCacheService, ChatCacheService>();
+        builder.Services.AddSingleton<IFileCacheService, FileCacheService>();
 
         // ViewModels
         builder.Services.AddTransient<LoginViewModel>();

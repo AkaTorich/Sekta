@@ -294,6 +294,15 @@ public partial class ChatsListViewModel : ObservableObject
     {
         if (chat is null) return;
 
+        // Clear unread badge immediately when opening the chat
+        var idx = Chats.IndexOf(chat);
+        if (idx >= 0 && chat.UnreadCount > 0)
+            Chats[idx] = chat with { UnreadCount = 0 };
+
+        var allIdx = _allChats.FindIndex(c => c.Id == chat.Id);
+        if (allIdx >= 0 && _allChats[allIdx].UnreadCount > 0)
+            _allChats[allIdx] = _allChats[allIdx] with { UnreadCount = 0 };
+
         if (IsDesktopMode)
         {
             // Cleanup previous embedded chat to stop ghost MarkAsRead calls

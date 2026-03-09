@@ -270,7 +270,8 @@
                     IsVisible="{Binding IsEmotePanelOpen}"
                     HeightRequest="220"
                     BackgroundColor="{AppThemeBinding Light=#F7F7F8, Dark=#17212B}">
-            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Emotes}">
+            <FlexLayout BindableLayout.ItemsSource="{Binding Emotes}"
+                        Wrap="Wrap" Direction="Row" JustifyContent="Start" AlignItems="Start">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="x:String">
                         <Grid Padding="4" HeightRequest="56" WidthRequest="56">
@@ -288,7 +289,7 @@
                         </Grid>
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
-            </VerticalStackLayout>
+            </FlexLayout>
         </ScrollView>
     </Grid>
 

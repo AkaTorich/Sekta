@@ -48,43 +48,8 @@ public partial class App : Application
         window.Created += async (s, e) =>
         {
             DebugLog.Clear();
-            DebugLog.Log("App startup: trying auto-login...");
-
-            // Try auto-login with saved refresh token
-            var loggedIn = await _authService.TryAutoLogin();
-            DebugLog.Log($"Auto-login result: {loggedIn}");
-
-            if (loggedIn)
-            {
-                try
-                {
-                    DebugLog.Log("Connecting SignalR...");
-                    await _signalRService.ConnectAsync(_authService.AccessToken!);
-                    DebugLog.Log("SignalR connected");
-
-                    await _notificationService.InitializeAsync();
-
-                    // Sync chats from server before showing the app
-                    DebugLog.Log("Syncing chats...");
-                    var chats = await _apiService.GetAsync<List<ChatDto>>(ApiRoutes.Chats);
-                    DebugLog.Log($"Chats sync: {(chats is null ? "DONT LOADED" : $"LOADED {chats.Count} chats")}");
-
-                    if (chats is not null)
-                        await _chatCache.SaveChatsAsync(chats);
-                }
-                catch (Exception ex)
-                {
-                    DebugLog.Log($"Startup sync EXCEPTION: {ex.Message}");
-                }
-
-                DebugLog.Log("Navigating to //main/chats");
-                await Shell.Current.GoToAsync("//main/chats");
-            }
-            else
-            {
-                DebugLog.Log("No saved session, going to //login");
-                await Shell.Current.GoToAsync("//login");
-            }
+            DebugLog.Log("App startup: going to login");
+            await Shell.Current.GoToAsync("//login");
         };
         return window;
     }
